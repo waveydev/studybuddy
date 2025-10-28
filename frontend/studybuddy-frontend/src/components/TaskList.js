@@ -1,0 +1,379 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import '../styles/modern.css';
+
+const TaskList = () => {
+  const [tasks, setTasks] = useState([]);
+  const [filteredTasks, setFilteredTasks] = useState([]);
+  const [filter, setFilter] = useState('all');
+  const [loading, setLoading] = useState(false);
+  const [newTask, setNewTask] = useState({
+    title: '',
+    description: '',
+    priority: 'medium',
+    category: 'other',
+    due_date: ''
+  });
+
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  useEffect(() => {
+    filterTasks();
+  }, [tasks, filter]);
+
+  const fetchTasks = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get('http://127.0.0.1:8000/api/tasks/');
+      setTasks(response.data);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createTask = async (e) => {
+    e.preventDefault();
+    if (!newTask.title.trim()) return;
+    
+    setLoading(true);
+    try {
+      const taskData = {
+        ...newTask,
+        due_date: newTask.due_date ? new Date(newTask.due_date).toISOString() : null
+      };
+      await axios.post('http://127.0.0.1:8000/api/tasks/', taskData);
+      setNewTask({ title: '', description: '', priority: 'medium', category: 'other', due_date: '' });
+      fetchTasks();
+    } catch (error) {
+      console.error('Error creating task:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateTaskStatus = async (taskId, newStatus) => {
+    try {
+      await axios.patch(`http://127.0.0.1:8000/api/tasks/${taskId}/`, { status: newStatus });
+      fetchTasks();
+    } catch (error) {
+      console.error('Error updating task:', error);
+    }
+  };
+
+  const deleteTask = async (taskId) => {
+    if (window.confirm('Are you sure you want to delete this task?')) {
+      try {
+        await axios.delete(`http://127.0.0.1:8000/api/tasks/${taskId}/`);
+        fetchTasks();
+      } catch (error) {
+        console.error('Error deleting task:', error);
+      }
+    }
+  };
+
+  const filterTasks = () => {
+    let filtered = tasks;
+    switch (filter) {
+      case 'pending':
+        filtered = tasks.filter(task => task.status === 'pending');
+        break;
+      case 'in_progress':
+        filtered = tasks.filter(task => task.status === 'in_progress');
+        break;
+      case 'completed':
+        filtered = tasks.filter(task => task.status === 'completed');
+        break;
+      case 'overdue':
+        filtered = tasks.filter(task => task.is_overdue);
+        break;
+      case 'high_priority':
+        filtered = tasks.filter(task => task.priority === 'high');
+        break;
+      default:
+        filtered = tasks;
+    }
+    setFilteredTasks(filtered);
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'No due date';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getDueDateClass = (task) => {
+    if (task.is_overdue) return 'overdue';
+    if (task.days_until_due !== null && task.days_until_due <= 3) return 'due-soon';
+    return '';
+  };
+
+  const getTaskCardClass = (task) => {
+    let classes = 'task-card fade-in';
+    if (task.is_overdue) classes += ' overdue';
+    else if (task.days_until_due !== null && task.days_until_due <= 3) classes += ' due-soon';
+    return classes;
+  };
+
+  const stats = {
+    total: tasks.length,
+    completed: tasks.filter(t => t.status === 'completed').length,
+    inProgress: tasks.filter(t => t.status === 'in_progress').length,
+    overdue: tasks.filter(t => t.is_overdue).length
+  };
+
+  return (
+    <div className="modern-container">
+      {/* Header */}
+      <div className="app-header">
+        <div className="container">
+          <h1 className="app-title">📚 StudyBuddy</h1>
+          <p className="app-subtitle">Your intelligent task management companion</p>
+        </div>
+      </div>
+
+      <div className="container">
+        {/* Statistics Cards */}
+        <div className="row mb-4">
+          <div className="col-md-3 col-sm-6">
+            <div className="stats-card">
+              <span className="stats-icon">📋</span>
+              <h2 className="stats-number">{stats.total}</h2>
+              <p className="stats-label">Total Tasks</p>
+            </div>
+          </div>
+          <div className="col-md-3 col-sm-6">
+            <div className="stats-card">
+              <span className="stats-icon">✅</span>
+              <h2 className="stats-number">{stats.completed}</h2>
+              <p className="stats-label">Completed</p>
+            </div>
+          </div>
+          <div className="col-md-3 col-sm-6">
+            <div className="stats-card">
+              <span className="stats-icon">⏳</span>
+              <h2 className="stats-number">{stats.inProgress}</h2>
+              <p className="stats-label">In Progress</p>
+            </div>
+          </div>
+          <div className="col-md-3 col-sm-6">
+            <div className="stats-card">
+              <span className="stats-icon">🚨</span>
+              <h2 className="stats-number">{stats.overdue}</h2>
+              <p className="stats-label">Overdue</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Add Task Form */}
+        <div className="row mb-4">
+          <div className="col-12">
+            <div className="modern-card">
+              <div className="card-header-modern">
+                <h3 className="mb-0">✨ Create New Task</h3>
+              </div>
+              <div className="card-body p-4">
+                <form onSubmit={createTask}>
+                  <div className="row g-3">
+                    <div className="col-md-6">
+                      <input
+                        type="text"
+                        className="form-control form-control-modern"
+                        placeholder="Enter task title *"
+                        value={newTask.title}
+                        onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <input
+                        type="text"
+                        className="form-control form-control-modern"
+                        placeholder="Task description (optional)"
+                        value={newTask.description}
+                        onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+                      />
+                    </div>
+                    <div className="col-md-3">
+                      <select
+                        className="form-control form-control-modern"
+                        value={newTask.priority}
+                        onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}
+                      >
+                        <option value="low">🟢 Low Priority</option>
+                        <option value="medium">🟡 Medium Priority</option>
+                        <option value="high">🔴 High Priority</option>
+                      </select>
+                    </div>
+                    <div className="col-md-3">
+                      <select
+                        className="form-control form-control-modern"
+                        value={newTask.category}
+                        onChange={(e) => setNewTask({ ...newTask, category: e.target.value })}
+                      >
+                        <option value="assignment">📝 Assignment</option>
+                        <option value="exam">📚 Exam</option>
+                        <option value="project">💼 Project</option>
+                        <option value="reading">📖 Reading</option>
+                        <option value="other">📌 Other</option>
+                      </select>
+                    </div>
+                    <div className="col-md-3">
+                      <input
+                        type="datetime-local"
+                        className="form-control form-control-modern"
+                        value={newTask.due_date}
+                        onChange={(e) => setNewTask({ ...newTask, due_date: e.target.value })}
+                      />
+                    </div>
+                    <div className="col-md-3">
+                      <button 
+                        type="submit" 
+                        className="btn btn-primary-modern btn-modern w-100"
+                        disabled={loading}
+                      >
+                        {loading ? <span className="loading-spinner"></span> : '➕'}
+                        Add Task
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Filter Buttons */}
+        <div className="filter-buttons">
+          {[
+            { key: 'all', label: '📋 All Tasks', count: stats.total },
+            { key: 'pending', label: '⏸️ Pending', count: tasks.filter(t => t.status === 'pending').length },
+            { key: 'in_progress', label: '⏳ In Progress', count: stats.inProgress },
+            { key: 'completed', label: '✅ Completed', count: stats.completed },
+            { key: 'overdue', label: '🚨 Overdue', count: stats.overdue },
+            { key: 'high_priority', label: '🔴 High Priority', count: tasks.filter(t => t.priority === 'high').length }
+          ].map(filterOption => (
+            <button
+              key={filterOption.key}
+              className={`filter-btn ${filter === filterOption.key ? 'active' : ''}`}
+              onClick={() => setFilter(filterOption.key)}
+            >
+              {filterOption.label} ({filterOption.count})
+            </button>
+          ))}
+        </div>
+
+        {/* Task List */}
+        <div className="row">
+          {loading && filteredTasks.length === 0 ? (
+            <div className="col-12">
+              <div className="empty-state">
+                <div className="loading-spinner" style={{ width: '40px', height: '40px' }}></div>
+                <h4>Loading tasks...</h4>
+              </div>
+            </div>
+          ) : filteredTasks.length === 0 ? (
+            <div className="col-12">
+              <div className="empty-state">
+                <div className="empty-state-icon">📝</div>
+                <h4>No tasks found</h4>
+                <p>Create your first task to get started with StudyBuddy!</p>
+              </div>
+            </div>
+          ) : (
+            filteredTasks.map(task => (
+              <div key={task.id} className="col-lg-4 col-md-6 mb-4">
+                <div className={getTaskCardClass(task)}>
+                  <div className="card-body p-3">
+                    <div className="d-flex justify-content-between align-items-start mb-2">
+                      <span className={`priority-badge priority-${task.priority}`}>
+                        {task.priority}
+                      </span>
+                      <span className="category-badge">
+                        {task.category}
+                      </span>
+                    </div>
+                    
+                    <h5 className="card-title mb-2">{task.title}</h5>
+                    <p className="card-text text-muted mb-3">
+                      {task.description || 'No description provided'}
+                    </p>
+                    
+                    <div className={`due-date-info ${getDueDateClass(task)}`}>
+                      <span>📅</span>
+                      <span>{formatDate(task.due_date)}</span>
+                    </div>
+                    
+                    {task.days_until_due !== null && (
+                      <div className={`due-date-info ${getDueDateClass(task)}`}>
+                        <span>⏰</span>
+                        <span>
+                          {task.days_until_due < 0 
+                            ? `${Math.abs(task.days_until_due)} days overdue!`
+                            : task.days_until_due === 0 
+                            ? 'Due today!'
+                            : `${task.days_until_due} days remaining`
+                          }
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="mt-3">
+                      <span className={`status-badge status-${task.status}`}>
+                        {task.status === 'in_progress' ? 'In Progress' : task.status}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="task-actions">
+                    {task.status !== 'completed' && (
+                      <>
+                        <button
+                          className="btn btn-info-modern btn-modern"
+                          onClick={() => updateTaskStatus(task.id, 'in_progress')}
+                        >
+                          ⏳ Progress
+                        </button>
+                        <button
+                          className="btn btn-success-modern btn-modern"
+                          onClick={() => updateTaskStatus(task.id, 'completed')}
+                        >
+                          ✅ Complete
+                        </button>
+                      </>
+                    )}
+                    {task.status === 'completed' && (
+                      <button
+                        className="btn btn-warning-modern btn-modern"
+                        onClick={() => updateTaskStatus(task.id, 'pending')}
+                      >
+                        🔄 Reopen
+                      </button>
+                    )}
+                    <button
+                      className="btn btn-danger-modern btn-modern"
+                      onClick={() => deleteTask(task.id)}
+                    >
+                      🗑️ Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default TaskList;
