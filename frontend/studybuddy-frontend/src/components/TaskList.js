@@ -283,10 +283,10 @@ const TaskList = () => {
         {/* Sections */}
         <AnimatePresence mode="wait">
           {mode === 'home' && (
-            <motion.div key="home" variants={sectionVariants} initial="initial" animate="animate" exit="exit">
+            <motion.div key="home" className="home-section" variants={sectionVariants} initial="initial" animate="animate" exit="exit">
               <div className="row g-4">
                 <div className="col-md-6">
-                  <div className="modern-card" style={{ height: '100%' }}>
+                  <div className="modern-card home-choice-card" style={{ height: '100%' }}>
                     <div className="card-header-modern"><h3 className="mb-0">📋 View your tasks</h3></div>
                     <div className="p-4">
                       <p>Browse your tasks by status, urgency, and due date. Use filters to focus on what matters.</p>
@@ -296,7 +296,7 @@ const TaskList = () => {
                   </div>
                 </div>
                 <div className="col-md-6">
-                  <div className="modern-card" style={{ height: '100%' }}>
+                  <div className="modern-card home-choice-card" style={{ height: '100%' }}>
                     <div className="card-header-modern"><h3 className="mb-0">✨ Create a task</h3></div>
                     <div className="p-4">
                       <p>Capture new work with title, description, priority, category and an optional due date.</p>
@@ -312,7 +312,7 @@ const TaskList = () => {
             <motion.div key="create" variants={sectionVariants} initial="initial" animate="animate" exit="exit">
               <div className="row mb-4">
                 <div className="col-12">
-                  <div className="modern-card">
+                  <div className="modern-card" style={{ height: '100%' }}>
                     <div className="card-header-modern">
                       <h3 className="mb-0">✨ Create New Task</h3>
                     </div>
@@ -324,7 +324,7 @@ const TaskList = () => {
                               type="text"
                               className="form-control form-control-modern"
                               placeholder="Enter task title *"
-                              value={newTask.title}
+                              value={newTask.title} 
                               onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
                               required
                             />
