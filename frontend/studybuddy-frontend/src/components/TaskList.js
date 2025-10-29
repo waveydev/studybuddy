@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import '../styles/modern.css';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Toaster, toast } from 'react-hot-toast';
 
 // Card animation variants for enter/exit and layout transitions
 const cardVariants = {
@@ -36,6 +37,9 @@ const TaskList = () => {
   const [loading, setLoading] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
   const [mode, setMode] = useState(initialMode); // 'home' | 'create' | 'view'
+  // Search state with debounce
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
@@ -55,6 +59,11 @@ const TaskList = () => {
   useEffect(() => {
     fetchTasks();
   }, []);
+  // Debounce search input
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search.trim().toLowerCase()), 300);
+    return () => clearTimeout(t);
+  }, [search]);
   // Persist mode
   useEffect(() => {
     try { localStorage.setItem('mode', mode); } catch {}
@@ -71,9 +80,52 @@ const TaskList = () => {
   };
 
 
+  // Compute filtered tasks based on current tasks, filter, and debouncedSearch
+  const filterTasks = useCallback(() => {
+    let filtered = tasks;
+    switch (filter) {
+      case 'pending':
+        filtered = tasks.filter(task => task.status === 'pending');
+        break;
+      case 'in_progress':
+        filtered = tasks.filter(task => task.status === 'in_progress');
+        break;
+      case 'completed':
+        filtered = tasks.filter(task => task.status === 'completed');
+        break;
+      case 'overdue':
+        filtered = tasks.filter(task => task.is_overdue);
+        break;
+      case 'high_priority':
+        filtered = tasks.filter(task => task.priority === 'high');
+        break;
+      default:
+        filtered = tasks;
+    }
+    // Apply debounced search across title, description, category, and status
+    if (debouncedSearch) {
+      const q = debouncedSearch;
+      filtered = filtered.filter((task) => {
+        const title = (task.title || '').toLowerCase();
+        const desc = (task.description || '').toLowerCase();
+        const cat = (task.category || '').toLowerCase();
+        const status = (task.status || '').toLowerCase();
+        return (
+          title.includes(q) ||
+          desc.includes(q) ||
+          cat.includes(q) ||
+          status.includes(q)
+        );
+      });
+    }
+    setFilteredTasks(filtered);
+  }, [tasks, filter, debouncedSearch]);
+
+
+  // Recompute filtered tasks when dependencies change
   useEffect(() => {
     filterTasks();
-  }, [tasks, filter]);
+  }, [filterTasks]);
 
   const fetchTasks = async () => {
     setLoading(true);
@@ -82,6 +134,7 @@ const TaskList = () => {
       setTasks(response.data);
     } catch (error) {
       console.error('Error fetching tasks:', error);
+      toast.error('Failed to load tasks');
     } finally {
       setLoading(false);
     }
@@ -139,10 +192,12 @@ const TaskList = () => {
       const created = res.data;
       // Replace temp with server result (includes computed fields)
       setTasks(prev => prev.map(t => (t.id === tempId ? created : t)));
+      toast.success('Task created');
     } catch (error) {
       console.error('Error creating task:', error);
       // Roll back optimistic card if the request failed
       setTasks(prev => prev.filter(t => t.id !== tempId));
+      toast.error('Failed to create task');
     }
   };
 
@@ -181,8 +236,10 @@ const TaskList = () => {
       await axios.patch(`http://127.0.0.1:8000/api/tasks/${taskId}/`, payload);
       setEditingTaskId(null);
       await fetchTasks();
+      toast.success('Task updated');
     } catch (error) {
       console.error('Error saving task edits:', error);
+      toast.error('Failed to update task');
     } finally {
       setSavingEdit(false);
     }
@@ -192,8 +249,14 @@ const TaskList = () => {
     try {
       await axios.patch(`http://127.0.0.1:8000/api/tasks/${taskId}/`, { status: newStatus });
       fetchTasks();
+      const msg =
+        newStatus === 'completed' ? 'Marked as completed' :
+        newStatus === 'in_progress' ? 'Moved to In Progress' :
+        newStatus === 'pending' ? 'Reopened task' : 'Status updated';
+      toast.success(msg);
     } catch (error) {
       console.error('Error updating task:', error);
+      toast.error('Failed to update status');
     }
   };
 
@@ -202,35 +265,15 @@ const TaskList = () => {
       try {
         await axios.delete(`http://127.0.0.1:8000/api/tasks/${taskId}/`);
         fetchTasks();
+        toast.success('Task deleted');
       } catch (error) {
         console.error('Error deleting task:', error);
+        toast.error('Failed to delete task');
       }
     }
   };
 
-  const filterTasks = () => {
-    let filtered = tasks;
-    switch (filter) {
-      case 'pending':
-        filtered = tasks.filter(task => task.status === 'pending');
-        break;
-      case 'in_progress':
-        filtered = tasks.filter(task => task.status === 'in_progress');
-        break;
-      case 'completed':
-        filtered = tasks.filter(task => task.status === 'completed');
-        break;
-      case 'overdue':
-        filtered = tasks.filter(task => task.is_overdue);
-        break;
-      case 'high_priority':
-        filtered = tasks.filter(task => task.priority === 'high');
-        break;
-      default:
-        filtered = tasks;
-    }
-    setFilteredTasks(filtered);
-  };
+  
 
   const formatDate = (dateString) => {
     if (!dateString) return 'No due date';
@@ -286,6 +329,13 @@ const TaskList = () => {
 
   return (
     <div className="modern-container">
+      <Toaster position="top-right"
+        toastOptions={{
+          style: { background: 'var(--surface-2)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' },
+          success: { iconTheme: { primary: '#10b981', secondary: '#ffffff' } },
+          error: { iconTheme: { primary: '#ef4444', secondary: '#ffffff' } }
+        }}
+      />
       {/* Header */}
       <div className="app-header">
         <div className="container">
@@ -442,6 +492,19 @@ const TaskList = () => {
                     <h2 className="stats-number">{stats.overdue}</h2>
                     <p className="stats-label">Overdue</p>
                   </div>
+                </div>
+              </div>
+
+              {/* Search */}
+              <div className="row mb-3">
+                <div className="col-12">
+                  <input
+                    type="text"
+                    className="form-control form-control-modern"
+                    placeholder="Search tasks by title, description, category, or status…"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
                 </div>
               </div>
 
