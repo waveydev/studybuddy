@@ -1,3 +1,5 @@
+/* Smooth scrolling for anchor and programmatic scrolls */
+html { scroll-behavior: smooth; }
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 /* Theme variables: Emerald (calming green/teal) */

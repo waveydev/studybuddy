@@ -60,6 +60,15 @@ const TaskList = () => {
     try { localStorage.setItem('mode', mode); } catch {}
   }, [mode]);
   const handleSetMode = (m) => setMode(m);
+  const handleSetFilter = (key) => {
+    setFilter(key);
+    // Use native smooth scroll so user input isn't blocked
+    try {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch {
+      window.scrollTo(0, 0);
+    }
+  };
 
 
   useEffect(() => {
@@ -304,7 +313,7 @@ const TaskList = () => {
                     <div className="p-4">
                       <p>Browse your tasks by status, urgency, and due date. Use filters to focus on what matters.</p>
   
-                      <button className="btn btn-primary-modern btn-modern" onClick={() => setMode('view')}>Open task dashboard →</button>
+                      <button className="btn btn-primary-modern btn-modern" onClick={() => handleSetMode('view')}>Open task dashboard →</button>
                     </div>
                   </div>
                 </div>
@@ -313,7 +322,7 @@ const TaskList = () => {
                     <div className="card-header-modern"><h3 className="mb-0">✏️ Create a task</h3></div>
                     <div className="p-4">
                       <p>Capture new work with title, description, priority, category and an optional due date.</p>
-                      <button className="btn btn-success-modern btn-modern" onClick={() => setMode('create')}>✏️ Start a new task →</button>
+                      <button className="btn btn-success-modern btn-modern" onClick={() => handleSetMode('create')}>✏️ Start a new task →</button>
                     </div>
                   </div>
                 </div>
@@ -449,7 +458,7 @@ const TaskList = () => {
                   <button
                     key={filterOption.key}
                     className={`filter-btn ${filter === filterOption.key ? 'active' : ''}`}
-                    onClick={() => setFilter(filterOption.key)}
+                    onClick={() => handleSetFilter(filterOption.key)}
                   >
                     {filterOption.label} ({filterOption.count})
                   </button>
@@ -457,7 +466,7 @@ const TaskList = () => {
               </div>
 
               {/* Task List */}
-              <div className="row">
+              <motion.div layout className="row">
                 {loading && filteredTasks.length === 0 ? (
                   <div className="col-12">
                     <div className="empty-state">
@@ -669,7 +678,7 @@ const TaskList = () => {
                     ))}
                   </AnimatePresence>
                 )}
-              </div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
