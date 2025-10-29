@@ -238,6 +238,22 @@ const TaskList = () => {
     overdue: tasks.filter(t => t.is_overdue).length
   };
 
+  // Empty-state helper to provide contextual messages per filter
+  const getEmptyStateContent = () => {
+    const hasAnyTasks = tasks.length > 0;
+    const map = {
+      all: hasAnyTasks
+        ? { icon: '📝', title: 'No tasks found', subtitle: '' }
+        : { icon: '📝', title: 'No tasks yet', subtitle: 'Create your first task to get started with StudyBuddy!' },
+      pending: { icon: '⏸️', title: 'No pending tasks', subtitle: hasAnyTasks ? 'Nothing to do here right now.' : 'Create your first task to get started with StudyBuddy!' },
+      in_progress: { icon: '⏳', title: 'No in-progress tasks', subtitle: hasAnyTasks ? 'Move a task to In Progress to see it here.' : 'Create your first task to get started with StudyBuddy!' },
+      completed: { icon: '✅', title: 'No completed tasks', subtitle: hasAnyTasks ? 'Complete a task to list it here.' : 'Create your first task to get started with StudyBuddy!' },
+      overdue: { icon: '🚨', title: 'No overdue tasks', subtitle: hasAnyTasks ? 'Great job — nothing overdue!' : 'Create your first task to get started with StudyBuddy!' },
+      high_priority: { icon: '🔴', title: 'No high-priority tasks', subtitle: hasAnyTasks ? 'Mark a task as High to see it here.' : 'Create your first task to get started with StudyBuddy!' },
+    };
+    return map[filter] || map.all;
+  };
+
   return (
     <div className="modern-container">
       {/* Header */}
@@ -391,9 +407,16 @@ const TaskList = () => {
           ) : filteredTasks.length === 0 ? (
             <div className="col-12">
               <div className="empty-state">
-                <div className="empty-state-icon">📝</div>
-                <h4>No tasks found</h4>
-                <p>Create your first task to get started with StudyBuddy!</p>
+                {(() => {
+                  const { icon, title, subtitle } = getEmptyStateContent();
+                  return (
+                    <>
+                      <div className="empty-state-icon">{icon}</div>
+                      <h4>{title}</h4>
+                      {subtitle ? <p>{subtitle}</p> : null}
+                    </>
+                  );
+                })()}
               </div>
             </div>
           ) : (
