@@ -1,21 +1,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
+/* Theme variables: Emerald (calming green/teal) */
 :root {
-  /* Fresh palette */
-  --primary-color: #6366f1; /* Indigo */
-  --primary-accent: #06b6d4; /* Cyan */
-  --primary-gradient: linear-gradient(135deg, #6366f1 0%, #06b6d4 100%);
-  --secondary-color: #a78bfa; /* Violet */
-  --success-color: #10b981; /* Emerald */
-  --warning-color: #f59e0b; /* Amber */
-  --danger-color: #ef4444;  /* Red */
-  --info-color: #0ea5e9;    /* Sky */
-  --dark-color: #0f172a;    /* Slate-900 */
-  --light-bg: #f6f7fb;      /* Soft light */
+  --primary-color: #10b981; /* Emerald 500 */
+  --primary-accent: #14b8a6; /* Teal 500 */
+  --primary-gradient: linear-gradient(135deg, #10b981 0%, #14b8a6 100%);
+  --secondary-color: #34d399; /* Emerald 400 */
+  --success-color: #059669; /* Emerald 600 */
+  --warning-color: #f59e0b;
+  --danger-color: #dc2626;  /* Red 600 */
+  --info-color: #0284c7;    /* Sky 600 */
+  --dark-color: #0b1220;
+  --light-bg: #f0fdf4;      /* Minty light */
   --surface: #ffffff;
-  --muted: #6b7280;
+  --muted: #334155;         /* Slate-700 */
 
-  /* Depth and motion */
   --card-shadow: 0 8px 20px rgba(2, 6, 23, 0.06);
   --card-shadow-hover: 0 16px 30px rgba(2, 6, 23, 0.12);
   --border-radius: 14px;
@@ -28,8 +27,8 @@
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  background: radial-gradient(1200px 800px at 10% -10%, rgba(99,102,241,0.08), transparent 40%),
-              radial-gradient(900px 600px at 100% 0%, rgba(6,182,212,0.08), transparent 45%),
+  background: radial-gradient(1200px 800px at 10% -10%, rgba(16,185,129,0.08), transparent 40%),
+              radial-gradient(900px 600px at 100% 0%, rgba(20,184,166,0.08), transparent 45%),
               var(--light-bg);
   color: var(--dark-color);
   line-height: 1.6;
@@ -91,6 +90,9 @@ body {
   border: 1px solid rgba(15, 23, 42, 0.06);
   margin-bottom: 1.5rem;
 }
+
+/* KPI gradient variant */
+/* (KPI gradient removed by request; keeping neutral stat cards) */
 
 .stats-card:hover {
   transform: translateY(-2px);
@@ -287,7 +289,7 @@ body {
   border-radius: 20px;
   font-size: 0.75rem;
   font-weight: 500;
-  background: rgba(6, 182, 212, 0.16);
+  background: rgba(6, 182, 212, 0.22);
   color: var(--primary-accent);
   text-transform: capitalize;
 }
@@ -428,7 +430,7 @@ body {
 }
 
 .home-section .home-choice-card {
-  border: 1px solid rgba(99,102,241,0.18);
+  border: 1px solid rgba(16,185,129,0.22);
   background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.86));
 }
 
@@ -438,5 +440,13 @@ body {
 }
 
 .home-section .card-header-modern {
-  background: linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(6,182,212,0.12) 100%);
+  background: linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(20,184,166,0.12) 100%);
 }
+
+/* Subtle pulse animation for landing cards */
+@keyframes softPulse {
+  0%, 100% { transform: translateY(0) scale(1); box-shadow: var(--card-shadow); }
+  50% { transform: translateY(-2px) scale(1.01); box-shadow: 0 16px 30px rgba(2,6,23,0.12); }
+}
+.soft-pulse { animation: softPulse 3.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .soft-pulse { animation: none; } }

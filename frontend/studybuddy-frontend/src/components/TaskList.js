@@ -23,12 +23,19 @@ const sectionVariants = {
 };
 
 const TaskList = () => {
+  // Mode persisted in localStorage
+  const initialMode = (() => {
+    try {
+      const m = localStorage.getItem('mode');
+      return ['home','create','view'].includes(m) ? m : 'home';
+    } catch { return 'home'; }
+  })();
   const [tasks, setTasks] = useState([]);
   const [filteredTasks, setFilteredTasks] = useState([]);
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
-  const [mode, setMode] = useState('home'); // 'home' | 'create' | 'view'
+  const [mode, setMode] = useState(initialMode); // 'home' | 'create' | 'view'
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
@@ -48,6 +55,12 @@ const TaskList = () => {
   useEffect(() => {
     fetchTasks();
   }, []);
+  // Persist mode
+  useEffect(() => {
+    try { localStorage.setItem('mode', mode); } catch {}
+  }, [mode]);
+  const handleSetMode = (m) => setMode(m);
+
 
   useEffect(() => {
     filterTasks();
@@ -275,9 +288,9 @@ const TaskList = () => {
       <div className="container">
         {/* Mode Switch Buttons */}
         <div className="text-center mb-4" style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button className={`btn btn-modern ${mode === 'view' ? 'btn-primary-modern' : 'btn-info-modern'}`} onClick={() => setMode('view')}>📋 View my tasks</button>
-          <button className={`btn btn-modern ${mode === 'create' ? 'btn-primary-modern' : 'btn-success-modern'}`} onClick={() => setMode('create')}>✨ Create a task</button>
-          <button className={`btn btn-modern`} onClick={() => setMode('home')}>🏠 Home</button>
+          <button className={`btn btn-modern ${mode === 'view' ? 'btn-primary-modern' : 'btn-info-modern'}`} onClick={() => handleSetMode('view')}>📋 View my tasks</button>
+          <button className={`btn btn-modern ${mode === 'create' ? 'btn-primary-modern' : 'btn-success-modern'}`} onClick={() => handleSetMode('create')}>✨ Create a task</button>
+          <button className={`btn btn-modern btn-outline-modern`} onClick={() => handleSetMode('home')}>🏠 Home</button>
         </div>
 
         {/* Sections */}
@@ -286,7 +299,7 @@ const TaskList = () => {
             <motion.div key="home" className="home-section" variants={sectionVariants} initial="initial" animate="animate" exit="exit">
               <div className="row g-4">
                 <div className="col-md-6">
-                  <div className="modern-card home-choice-card" style={{ height: '100%' }}>
+                  <div className="modern-card home-choice-card soft-pulse" style={{ height: '100%' }}>
                     <div className="card-header-modern"><h3 className="mb-0">📋 View your tasks</h3></div>
                     <div className="p-4">
                       <p>Browse your tasks by status, urgency, and due date. Use filters to focus on what matters.</p>
@@ -296,7 +309,7 @@ const TaskList = () => {
                   </div>
                 </div>
                 <div className="col-md-6">
-                  <div className="modern-card home-choice-card" style={{ height: '100%' }}>
+                  <div className="modern-card home-choice-card soft-pulse" style={{ height: '100%' }}>
                     <div className="card-header-modern"><h3 className="mb-0">✨ Create a task</h3></div>
                     <div className="p-4">
                       <p>Capture new work with title, description, priority, category and an optional due date.</p>
