@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../styles/modern.css';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// Card animation variants for enter/exit and layout transitions
+const cardVariants = {
+  initial: { opacity: 0, y: -10, scale: 0.98 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { type: 'spring', stiffness: 420, damping: 30, mass: 0.7 }
+  },
+  exit: { opacity: 0, y: 8, scale: 0.98, transition: { duration: 0.15 } }
+};
 
 const TaskList = () => {
   const [tasks, setTasks] = useState([]);
@@ -64,20 +77,42 @@ const TaskList = () => {
   const createTask = async (e) => {
     e.preventDefault();
     if (!newTask.title.trim()) return;
-    
-    setLoading(true);
+
+    // Optimistic insert for instant feedback
+    const tempId = `temp-${Date.now()}`;
+    const optimisticTask = {
+      id: tempId,
+      title: newTask.title,
+      description: newTask.description,
+      priority: newTask.priority,
+      category: newTask.category,
+      status: 'pending',
+      due_date: newTask.due_date ? new Date(newTask.due_date).toISOString() : null,
+      is_overdue: false,
+      days_until_due: null,
+      _optimistic: true,
+    };
+    setTasks(prev => [optimisticTask, ...prev]);
+
+    // Clear form quickly for snappy UX; keep button state responsive
+    setNewTask({ title: '', description: '', priority: 'medium', category: 'other', due_date: '' });
+
     try {
       const taskData = {
-        ...newTask,
-        due_date: newTask.due_date ? new Date(newTask.due_date).toISOString() : null
+        title: optimisticTask.title,
+        description: optimisticTask.description,
+        priority: optimisticTask.priority,
+        category: optimisticTask.category,
+        due_date: optimisticTask.due_date || null,
       };
-      await axios.post('http://127.0.0.1:8000/api/tasks/', taskData);
-      setNewTask({ title: '', description: '', priority: 'medium', category: 'other', due_date: '' });
-      fetchTasks();
+      const res = await axios.post('http://127.0.0.1:8000/api/tasks/', taskData);
+      const created = res.data;
+      // Replace temp with server result (includes computed fields)
+      setTasks(prev => prev.map(t => (t.id === tempId ? created : t)));
     } catch (error) {
       console.error('Error creating task:', error);
-    } finally {
-      setLoading(false);
+      // Roll back optimistic card if the request failed
+      setTasks(prev => prev.filter(t => t.id !== tempId));
     }
   };
 
@@ -362,9 +397,28 @@ const TaskList = () => {
               </div>
             </div>
           ) : (
-            filteredTasks.map(task => (
-              <div key={task.id} className="col-lg-4 col-md-6 mb-4">
-                <div className={getTaskCardClass(task)}>
+            <AnimatePresence initial={false}>
+              {filteredTasks.map(task => (
+                <motion.div
+                  key={task.id}
+                  layout
+                  variants={cardVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  className="col-lg-4 col-md-6 mb-4"
+                >
+                  <motion.div
+                    layout
+                    initial={task._optimistic ? { boxShadow: '0 0 0 rgba(76,175,80,0)' } : undefined}
+                    animate={
+                      task._optimistic
+                        ? { boxShadow: ['0 0 0 rgba(76,175,80,0)', '0 0 16px rgba(76,175,80,0.45)', '0 0 0 rgba(76,175,80,0)'] }
+                        : undefined
+                    }
+                    transition={task._optimistic ? { duration: 0.9 } : undefined}
+                    className={getTaskCardClass(task)}
+                  >
                   <div className="card-body p-3">
                     {editingTaskId === task.id ? (
                       // Edit mode: show inline form
@@ -526,9 +580,10 @@ const TaskList = () => {
                       </>
                     )}
                   </div>
-                </div>
-              </div>
-            ))
+                  </motion.div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           )}
         </div>
       </div>
