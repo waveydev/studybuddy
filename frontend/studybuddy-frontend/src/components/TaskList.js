@@ -15,12 +15,20 @@ const cardVariants = {
   exit: { opacity: 0, y: 8, scale: 0.98, transition: { duration: 0.15 } }
 };
 
+// Section/page-level transitions
+const sectionVariants = {
+  initial: { opacity: 0, y: 12 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.28 } },
+  exit: { opacity: 0, y: -12, transition: { duration: 0.2 } }
+};
+
 const TaskList = () => {
   const [tasks, setTasks] = useState([]);
   const [filteredTasks, setFilteredTasks] = useState([]);
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [mode, setMode] = useState('home'); // 'home' | 'create' | 'view'
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
@@ -265,223 +273,87 @@ const TaskList = () => {
       </div>
 
       <div className="container">
-        {/* Statistics Cards */}
-        <div className="row mb-4">
-          <div className="col-md-3 col-sm-6">
-            <div className="stats-card">
-              <span className="stats-icon">📋</span>
-              <h2 className="stats-number">{stats.total}</h2>
-              <p className="stats-label">Total Tasks</p>
-            </div>
-          </div>
-          <div className="col-md-3 col-sm-6">
-            <div className="stats-card">
-              <span className="stats-icon">✅</span>
-              <h2 className="stats-number">{stats.completed}</h2>
-              <p className="stats-label">Completed</p>
-            </div>
-          </div>
-          <div className="col-md-3 col-sm-6">
-            <div className="stats-card">
-              <span className="stats-icon">⏳</span>
-              <h2 className="stats-number">{stats.inProgress}</h2>
-              <p className="stats-label">In Progress</p>
-            </div>
-          </div>
-          <div className="col-md-3 col-sm-6">
-            <div className="stats-card">
-              <span className="stats-icon">🚨</span>
-              <h2 className="stats-number">{stats.overdue}</h2>
-              <p className="stats-label">Overdue</p>
-            </div>
-          </div>
+        {/* Mode Switch Buttons */}
+        <div className="text-center mb-4" style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <button className={`btn btn-modern ${mode === 'view' ? 'btn-primary-modern' : 'btn-info-modern'}`} onClick={() => setMode('view')}>📋 View my tasks</button>
+          <button className={`btn btn-modern ${mode === 'create' ? 'btn-primary-modern' : 'btn-success-modern'}`} onClick={() => setMode('create')}>✨ Create a task</button>
+          <button className={`btn btn-modern`} onClick={() => setMode('home')}>🏠 Home</button>
         </div>
 
-        {/* Add Task Form */}
-        <div className="row mb-4">
-          <div className="col-12">
-            <div className="modern-card">
-              <div className="card-header-modern">
-                <h3 className="mb-0">✨ Create New Task</h3>
-              </div>
-              <div className="card-body p-4">
-                <form onSubmit={createTask}>
-                  <div className="row g-3">
-                    <div className="col-md-6">
-                      <input
-                        type="text"
-                        className="form-control form-control-modern"
-                        placeholder="Enter task title *"
-                        value={newTask.title}
-                        onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="col-md-6">
-                      <input
-                        type="text"
-                        className="form-control form-control-modern"
-                        placeholder="Task description (optional)"
-                        value={newTask.description}
-                        onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-                      />
-                    </div>
-                    <div className="col-md-3">
-                      <select
-                        className="form-control form-control-modern"
-                        value={newTask.priority}
-                        onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}
-                      >
-                        <option value="low">🟢 Low Priority</option>
-                        <option value="medium">🟡 Medium Priority</option>
-                        <option value="high">🔴 High Priority</option>
-                      </select>
-                    </div>
-                    <div className="col-md-3">
-                      <select
-                        className="form-control form-control-modern"
-                        value={newTask.category}
-                        onChange={(e) => setNewTask({ ...newTask, category: e.target.value })}
-                      >
-                        <option value="assignment">📝 Assignment</option>
-                        <option value="exam">📚 Exam</option>
-                        <option value="project">💼 Project</option>
-                        <option value="reading">📖 Reading</option>
-                        <option value="other">📌 Other</option>
-                      </select>
-                    </div>
-                    <div className="col-md-3">
-                      <input
-                        type="datetime-local"
-                        className="form-control form-control-modern"
-                        value={newTask.due_date}
-                        onChange={(e) => setNewTask({ ...newTask, due_date: e.target.value })}
-                      />
-                    </div>
-                    <div className="col-md-3">
-                      <button 
-                        type="submit" 
-                        className="btn btn-primary-modern btn-modern w-100"
-                        disabled={loading}
-                      >
-                        {loading ? <span className="loading-spinner"></span> : '➕'}
-                        Add Task
-                      </button>
+        {/* Sections */}
+        <AnimatePresence mode="wait">
+          {mode === 'home' && (
+            <motion.div key="home" variants={sectionVariants} initial="initial" animate="animate" exit="exit">
+              <div className="row g-4">
+                <div className="col-md-6">
+                  <div className="modern-card" style={{ height: '100%' }}>
+                    <div className="card-header-modern"><h3 className="mb-0">📋 View your tasks</h3></div>
+                    <div className="p-4">
+                      <p>Browse your tasks by status, urgency, and due date. Use filters to focus on what matters.</p>
+  
+                      <button className="btn btn-primary-modern btn-modern" onClick={() => setMode('view')}>Open task dashboard →</button>
                     </div>
                   </div>
-                </form>
+                </div>
+                <div className="col-md-6">
+                  <div className="modern-card" style={{ height: '100%' }}>
+                    <div className="card-header-modern"><h3 className="mb-0">✨ Create a task</h3></div>
+                    <div className="p-4">
+                      <p>Capture new work with title, description, priority, category and an optional due date.</p>
+                      <button className="btn btn-success-modern btn-modern" onClick={() => setMode('create')}>Start a new task →</button>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
+            </motion.div>
+          )}
 
-        {/* Filter Buttons */}
-        <div className="filter-buttons">
-          {[
-            { key: 'all', label: '📋 All Tasks', count: stats.total },
-            { key: 'pending', label: '⏸️ Pending', count: tasks.filter(t => t.status === 'pending').length },
-            { key: 'in_progress', label: '⏳ In Progress', count: stats.inProgress },
-            { key: 'completed', label: '✅ Completed', count: stats.completed },
-            { key: 'overdue', label: '🚨 Overdue', count: stats.overdue },
-            { key: 'high_priority', label: '🔴 High Priority', count: tasks.filter(t => t.priority === 'high').length }
-          ].map(filterOption => (
-            <button
-              key={filterOption.key}
-              className={`filter-btn ${filter === filterOption.key ? 'active' : ''}`}
-              onClick={() => setFilter(filterOption.key)}
-            >
-              {filterOption.label} ({filterOption.count})
-            </button>
-          ))}
-        </div>
-
-        {/* Task List */}
-        <div className="row">
-          {loading && filteredTasks.length === 0 ? (
-            <div className="col-12">
-              <div className="empty-state">
-                <div className="loading-spinner" style={{ width: '40px', height: '40px' }}></div>
-                <h4>Loading tasks...</h4>
-              </div>
-            </div>
-          ) : filteredTasks.length === 0 ? (
-            <div className="col-12">
-              <div className="empty-state">
-                {(() => {
-                  const { icon, title, subtitle } = getEmptyStateContent();
-                  return (
-                    <>
-                      <div className="empty-state-icon">{icon}</div>
-                      <h4>{title}</h4>
-                      {subtitle ? <p>{subtitle}</p> : null}
-                    </>
-                  );
-                })()}
-              </div>
-            </div>
-          ) : (
-            <AnimatePresence initial={false}>
-              {filteredTasks.map(task => (
-                <motion.div
-                  key={task.id}
-                  layout
-                  variants={cardVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  className="col-lg-4 col-md-6 mb-4"
-                >
-                  <motion.div
-                    layout
-                    initial={task._optimistic ? { boxShadow: '0 0 0 rgba(76,175,80,0)' } : undefined}
-                    animate={
-                      task._optimistic
-                        ? { boxShadow: ['0 0 0 rgba(76,175,80,0)', '0 0 16px rgba(76,175,80,0.45)', '0 0 0 rgba(76,175,80,0)'] }
-                        : undefined
-                    }
-                    transition={task._optimistic ? { duration: 0.9 } : undefined}
-                    className={getTaskCardClass(task)}
-                  >
-                  <div className="card-body p-3">
-                    {editingTaskId === task.id ? (
-                      // Edit mode: show inline form
-                      <div className="edit-form">
-                        <div className="row g-2">
-                          <div className="col-12">
+          {mode === 'create' && (
+            <motion.div key="create" variants={sectionVariants} initial="initial" animate="animate" exit="exit">
+              <div className="row mb-4">
+                <div className="col-12">
+                  <div className="modern-card">
+                    <div className="card-header-modern">
+                      <h3 className="mb-0">✨ Create New Task</h3>
+                    </div>
+                    <div className="card-body p-4">
+                      <form onSubmit={createTask}>
+                        <div className="row g-3">
+                          <div className="col-md-6">
                             <input
                               type="text"
                               className="form-control form-control-modern"
-                              placeholder="Task title *"
-                              value={editForm.title}
-                              onChange={(e) => handleEditChange('title', e.target.value)}
+                              placeholder="Enter task title *"
+                              value={newTask.title}
+                              onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
                               required
                             />
                           </div>
-                          <div className="col-12">
+                          <div className="col-md-6">
                             <input
                               type="text"
                               className="form-control form-control-modern"
-                              placeholder="Description"
-                              value={editForm.description}
-                              onChange={(e) => handleEditChange('description', e.target.value)}
+                              placeholder="Task description (optional)"
+                              value={newTask.description}
+                              onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
                             />
                           </div>
-                          <div className="col-6">
+                          <div className="col-md-3">
                             <select
                               className="form-control form-control-modern"
-                              value={editForm.priority}
-                              onChange={(e) => handleEditChange('priority', e.target.value)}
+                              value={newTask.priority}
+                              onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}
                             >
-                              <option value="low">🟢 Low</option>
-                              <option value="medium">🟡 Medium</option>
-                              <option value="high">🔴 High</option>
+                              <option value="low">🟢 Low Priority</option>
+                              <option value="medium">🟡 Medium Priority</option>
+                              <option value="high">🔴 High Priority</option>
                             </select>
                           </div>
-                          <div className="col-6">
+                          <div className="col-md-3">
                             <select
                               className="form-control form-control-modern"
-                              value={editForm.category}
-                              onChange={(e) => handleEditChange('category', e.target.value)}
+                              value={newTask.category}
+                              onChange={(e) => setNewTask({ ...newTask, category: e.target.value })}
                             >
                               <option value="assignment">📝 Assignment</option>
                               <option value="exam">📚 Exam</option>
@@ -490,125 +362,304 @@ const TaskList = () => {
                               <option value="other">📌 Other</option>
                             </select>
                           </div>
-                          <div className="col-12">
+                          <div className="col-md-3">
                             <input
                               type="datetime-local"
                               className="form-control form-control-modern"
-                              value={editForm.due_date}
-                              onChange={(e) => handleEditChange('due_date', e.target.value)}
+                              value={newTask.due_date}
+                              onChange={(e) => setNewTask({ ...newTask, due_date: e.target.value })}
                             />
                           </div>
-                        </div>
-                      </div>
-                    ) : (
-                      // View mode
-                      <>
-                        <div className="d-flex justify-content-between align-items-start mb-2">
-                          <span className={`priority-badge priority-${task.priority}`}>
-                            {task.priority}
-                          </span>
-                          <span className="category-badge">
-                            {task.category}
-                          </span>
-                        </div>
-                        
-                        <h5 className="card-title mb-2">{task.title}</h5>
-                        <p className="card-text text-muted mb-3">
-                          {task.description || 'No description provided'}
-                        </p>
-                        
-                        <div className={`due-date-info ${getDueDateClass(task)}`}>
-                          <span>📅</span>
-                          <span>{formatDate(task.due_date)}</span>
-                        </div>
-                        
-                        {task.status !== 'completed' && task.days_until_due !== null && (
-                          <div className={`due-date-info ${getDueDateClass(task)}`}>
-                            <span>⏰</span>
-                            <span>
-                              {task.days_until_due < 0 
-                                ? `${Math.abs(task.days_until_due)} days overdue!`
-                                : task.days_until_due === 0 
-                                ? 'Due today!'
-                                : `${task.days_until_due} days remaining`
-                              }
-                            </span>
+                          <div className="col-md-3">
+                            <button 
+                              type="submit" 
+                              className="btn btn-primary-modern btn-modern w-100"
+                              disabled={loading}
+                            >
+                              {loading ? <span className="loading-spinner"></span> : '➕'}
+                              Add Task
+                            </button>
                           </div>
-                        )}
-
-                        <div className="mt-3">
-                          <span className={`status-badge status-${task.status}`}>
-                            {task.status === 'in_progress' ? 'In Progress' : task.status}
-                          </span>
                         </div>
-                      </>
-                    )}
+                      </form>
+                    </div>
                   </div>
-                  
-                  <div className="task-actions">
-                    {editingTaskId === task.id ? (
-                      <>
-                        <button
-                          className="btn btn-success-modern btn-modern"
-                          disabled={savingEdit}
-                          onClick={() => saveEdit(task.id)}
-                        >
-                          {savingEdit ? 'Saving…' : '💾 Save'}
-                        </button>
-                        <button
-                          className="btn btn-warning-modern btn-modern"
-                          onClick={cancelEdit}
-                        >
-                          ✖️ Cancel
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          className="btn btn-secondary btn-modern"
-                          onClick={() => startEdit(task)}
-                        >
-                          ✏️ Edit
-                        </button>
-                        {task.status !== 'completed' && (
-                          <>
-                            <button
-                              className="btn btn-info-modern btn-modern"
-                              onClick={() => updateTaskStatus(task.id, 'in_progress')}
-                            >
-                              ⏳ Progress
-                            </button>
-                            <button
-                              className="btn btn-success-modern btn-modern"
-                              onClick={() => updateTaskStatus(task.id, 'completed')}
-                            >
-                              ✅ Complete
-                            </button>
-                          </>
-                        )}
-                        {task.status === 'completed' && (
-                          <button
-                            className="btn btn-warning-modern btn-modern"
-                            onClick={() => updateTaskStatus(task.id, 'pending')}
-                          >
-                            🔄 Reopen
-                          </button>
-                        )}
-                        <button
-                          className="btn btn-danger-modern btn-modern"
-                          onClick={() => deleteTask(task.id)}
-                        >
-                          🗑️ Delete
-                        </button>
-                      </>
-                    )}
-                  </div>
-                  </motion.div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
+                </div>
+              </div>
+            </motion.div>
           )}
-        </div>
+
+          {mode === 'view' && (
+            <motion.div key="view" variants={sectionVariants} initial="initial" animate="animate" exit="exit">
+              {/* Statistics Cards */}
+              <div className="row mb-4">
+                <div className="col-md-3 col-sm-6">
+                  <div className="stats-card">
+                    <span className="stats-icon">📋</span>
+                    <h2 className="stats-number">{stats.total}</h2>
+                    <p className="stats-label">Total Tasks</p>
+                  </div>
+                </div>
+                <div className="col-md-3 col-sm-6">
+                  <div className="stats-card">
+                    <span className="stats-icon">✅</span>
+                    <h2 className="stats-number">{stats.completed}</h2>
+                    <p className="stats-label">Completed</p>
+                  </div>
+                </div>
+                <div className="col-md-3 col-sm-6">
+                  <div className="stats-card">
+                    <span className="stats-icon">⏳</span>
+                    <h2 className="stats-number">{stats.inProgress}</h2>
+                    <p className="stats-label">In Progress</p>
+                  </div>
+                </div>
+                <div className="col-md-3 col-sm-6">
+                  <div className="stats-card">
+                    <span className="stats-icon">🚨</span>
+                    <h2 className="stats-number">{stats.overdue}</h2>
+                    <p className="stats-label">Overdue</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Filter Buttons */}
+              <div className="filter-buttons">
+                {[
+                  { key: 'all', label: '📋 All Tasks', count: stats.total },
+                  { key: 'pending', label: '⏸️ Pending', count: tasks.filter(t => t.status === 'pending').length },
+                  { key: 'in_progress', label: '⏳ In Progress', count: stats.inProgress },
+                  { key: 'completed', label: '✅ Completed', count: stats.completed },
+                  { key: 'overdue', label: '🚨 Overdue', count: stats.overdue },
+                  { key: 'high_priority', label: '🔴 High Priority', count: tasks.filter(t => t.priority === 'high').length }
+                ].map(filterOption => (
+                  <button
+                    key={filterOption.key}
+                    className={`filter-btn ${filter === filterOption.key ? 'active' : ''}`}
+                    onClick={() => setFilter(filterOption.key)}
+                  >
+                    {filterOption.label} ({filterOption.count})
+                  </button>
+                ))}
+              </div>
+
+              {/* Task List */}
+              <div className="row">
+                {loading && filteredTasks.length === 0 ? (
+                  <div className="col-12">
+                    <div className="empty-state">
+                      <div className="loading-spinner" style={{ width: '40px', height: '40px' }}></div>
+                      <h4>Loading tasks...</h4>
+                    </div>
+                  </div>
+                ) : filteredTasks.length === 0 ? (
+                  <div className="col-12">
+                    <div className="empty-state">
+                      {(() => {
+                        const { icon, title, subtitle } = getEmptyStateContent();
+                        return (
+                          <>
+                            <div className="empty-state-icon">{icon}</div>
+                            <h4>{title}</h4>
+                            {subtitle ? <p>{subtitle}</p> : null}
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                ) : (
+                  <AnimatePresence initial={false}>
+                    {filteredTasks.map(task => (
+                      <motion.div
+                        key={task.id}
+                        layout
+                        variants={cardVariants}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        className="col-lg-4 col-md-6 mb-4"
+                      >
+                        <motion.div
+                          layout
+                          initial={task._optimistic ? { boxShadow: '0 0 0 rgba(76,175,80,0)' } : undefined}
+                          animate={
+                            task._optimistic
+                              ? { boxShadow: ['0 0 0 rgba(76,175,80,0)', '0 0 16px rgba(76,175,80,0.45)', '0 0 0 rgba(76,175,80,0)'] }
+                              : undefined
+                          }
+                          transition={task._optimistic ? { duration: 0.9 } : undefined}
+                          className={getTaskCardClass(task)}
+                        >
+                        <div className="card-body p-3">
+                          {editingTaskId === task.id ? (
+                            // Edit mode: show inline form
+                            <div className="edit-form">
+                              <div className="row g-2">
+                                <div className="col-12">
+                                  <input
+                                    type="text"
+                                    className="form-control form-control-modern"
+                                    placeholder="Task title *"
+                                    value={editForm.title}
+                                    onChange={(e) => handleEditChange('title', e.target.value)}
+                                    required
+                                  />
+                                </div>
+                                <div className="col-12">
+                                  <input
+                                    type="text"
+                                    className="form-control form-control-modern"
+                                    placeholder="Description"
+                                    value={editForm.description}
+                                    onChange={(e) => handleEditChange('description', e.target.value)}
+                                  />
+                                </div>
+                                <div className="col-6">
+                                  <select
+                                    className="form-control form-control-modern"
+                                    value={editForm.priority}
+                                    onChange={(e) => handleEditChange('priority', e.target.value)}
+                                  >
+                                    <option value="low">🟢 Low</option>
+                                    <option value="medium">🟡 Medium</option>
+                                    <option value="high">🔴 High</option>
+                                  </select>
+                                </div>
+                                <div className="col-6">
+                                  <select
+                                    className="form-control form-control-modern"
+                                    value={editForm.category}
+                                    onChange={(e) => handleEditChange('category', e.target.value)}
+                                  >
+                                    <option value="assignment">📝 Assignment</option>
+                                    <option value="exam">📚 Exam</option>
+                                    <option value="project">💼 Project</option>
+                                    <option value="reading">📖 Reading</option>
+                                    <option value="other">📌 Other</option>
+                                  </select>
+                                </div>
+                                <div className="col-12">
+                                  <input
+                                    type="datetime-local"
+                                    className="form-control form-control-modern"
+                                    value={editForm.due_date}
+                                    onChange={(e) => handleEditChange('due_date', e.target.value)}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            // View mode
+                            <>
+                              <div className="d-flex justify-content-between align-items-start mb-2">
+                                <span className={`priority-badge priority-${task.priority}`}>
+                                  {task.priority}
+                                </span>
+                                <span className="category-badge">
+                                  {task.category}
+                                </span>
+                              </div>
+                              
+                              <h5 className="card-title mb-2">{task.title}</h5>
+                              <p className="card-text text-muted mb-3">
+                                {task.description || 'No description provided'}
+                              </p>
+                              
+                              <div className={`due-date-info ${getDueDateClass(task)}`}>
+                                <span>📅</span>
+                                <span>{formatDate(task.due_date)}</span>
+                              </div>
+                              
+                              {task.status !== 'completed' && task.days_until_due !== null && (
+                                <div className={`due-date-info ${getDueDateClass(task)}`}>
+                                  <span>⏰</span>
+                                  <span>
+                                    {task.days_until_due < 0 
+                                      ? `${Math.abs(task.days_until_due)} days overdue!`
+                                      : task.days_until_due === 0 
+                                      ? 'Due today!'
+                                      : `${task.days_until_due} days remaining`
+                                    }
+                                  </span>
+                                </div>
+                              )}
+
+                              <div className="mt-3">
+                                <span className={`status-badge status-${task.status}`}>
+                                  {task.status === 'in_progress' ? 'In Progress' : task.status}
+                                </span>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                        
+                        <div className="task-actions">
+                          {editingTaskId === task.id ? (
+                            <>
+                              <button
+                                className="btn btn-success-modern btn-modern"
+                                disabled={savingEdit}
+                                onClick={() => saveEdit(task.id)}
+                              >
+                                {savingEdit ? 'Saving…' : '💾 Save'}
+                              </button>
+                              <button
+                                className="btn btn-warning-modern btn-modern"
+                                onClick={cancelEdit}
+                              >
+                                ✖️ Cancel
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                className="btn btn-secondary btn-modern"
+                                onClick={() => startEdit(task)}
+                              >
+                                ✏️ Edit
+                              </button>
+                              {task.status !== 'completed' && (
+                                <>
+                                  <button
+                                    className="btn btn-info-modern btn-modern"
+                                    onClick={() => updateTaskStatus(task.id, 'in_progress')}
+                                  >
+                                    ⏳ Progress
+                                  </button>
+                                  <button
+                                    className="btn btn-success-modern btn-modern"
+                                    onClick={() => updateTaskStatus(task.id, 'completed')}
+                                  >
+                                    ✅ Complete
+                                  </button>
+                                </>
+                              )}
+                              {task.status === 'completed' && (
+                                <button
+                                  className="btn btn-warning-modern btn-modern"
+                                  onClick={() => updateTaskStatus(task.id, 'pending')}
+                                >
+                                  🔄 Reopen
+                                </button>
+                              )}
+                              <button
+                                className="btn btn-danger-modern btn-modern"
+                                onClick={() => deleteTask(task.id)}
+                              >
+                                🗑️ Delete
+                              </button>
+                            </>
+                          )}
+                        </div>
+                        </motion.div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
