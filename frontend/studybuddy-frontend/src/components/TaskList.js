@@ -465,34 +465,48 @@ const TaskList = () => {
             <motion.div key="view" variants={sectionVariants} initial="initial" animate="animate" exit="exit">
               {/* Statistics Cards */}
               <div className="row mb-4">
-                <div className="col-md-3 col-sm-6">
-                  <div className="stats-card">
-                    <span className="stats-icon">📋</span>
-                    <h2 className="stats-number">{stats.total}</h2>
-                    <p className="stats-label">Total Tasks</p>
-                  </div>
-                </div>
-                <div className="col-md-3 col-sm-6">
-                  <div className="stats-card">
-                    <span className="stats-icon">✅</span>
-                    <h2 className="stats-number">{stats.completed}</h2>
-                    <p className="stats-label">Completed</p>
-                  </div>
-                </div>
-                <div className="col-md-3 col-sm-6">
-                  <div className="stats-card">
-                    <span className="stats-icon">⏳</span>
-                    <h2 className="stats-number">{stats.inProgress}</h2>
-                    <p className="stats-label">In Progress</p>
-                  </div>
-                </div>
-                <div className="col-md-3 col-sm-6">
-                  <div className="stats-card">
-                    <span className="stats-icon">🚨</span>
-                    <h2 className="stats-number">{stats.overdue}</h2>
-                    <p className="stats-label">Overdue</p>
-                  </div>
-                </div>
+                {loading ? (
+                  [0,1,2,3].map((i) => (
+                    <div key={i} className="col-md-3 col-sm-6">
+                      <div className="stats-card skeleton">
+                        <div className="skeleton-circle" style={{ margin: '0 auto 10px', width: 36, height: 36 }}></div>
+                        <div className="skeleton-line w-50" style={{ margin: '8px auto' }}></div>
+                        <div className="skeleton-line w-25" style={{ margin: '8px auto 0' }}></div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <div className="col-md-3 col-sm-6">
+                      <div className="stats-card">
+                        <span className="stats-icon">📋</span>
+                        <h2 className="stats-number">{stats.total}</h2>
+                        <p className="stats-label">Total Tasks</p>
+                      </div>
+                    </div>
+                    <div className="col-md-3 col-sm-6">
+                      <div className="stats-card">
+                        <span className="stats-icon">✅</span>
+                        <h2 className="stats-number">{stats.completed}</h2>
+                        <p className="stats-label">Completed</p>
+                      </div>
+                    </div>
+                    <div className="col-md-3 col-sm-6">
+                      <div className="stats-card">
+                        <span className="stats-icon">⏳</span>
+                        <h2 className="stats-number">{stats.inProgress}</h2>
+                        <p className="stats-label">In Progress</p>
+                      </div>
+                    </div>
+                    <div className="col-md-3 col-sm-6">
+                      <div className="stats-card">
+                        <span className="stats-icon">🚨</span>
+                        <h2 className="stats-number">{stats.overdue}</h2>
+                        <p className="stats-label">Overdue</p>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Search */}
@@ -531,12 +545,27 @@ const TaskList = () => {
               {/* Task List */}
               <motion.div layout className="row">
                 {loading && filteredTasks.length === 0 ? (
-                  <div className="col-12">
-                    <div className="empty-state">
-                      <div className="loading-spinner" style={{ width: '40px', height: '40px' }}></div>
-                      <h4>Loading tasks...</h4>
+                  Array.from({ length: 6 }).map((_, idx) => (
+                    <div key={idx} className="col-lg-4 col-md-6 mb-4">
+                      <div className="task-card skeleton">
+                        <div className="card-body p-3">
+                          <div className="d-flex justify-content-between align-items-start mb-2">
+                            <div className="skeleton-line w-25" style={{ height: 18 }}></div>
+                            <div className="skeleton-line w-20" style={{ height: 18 }}></div>
+                          </div>
+                          <div className="skeleton-line w-75" style={{ height: 18, marginBottom: 8 }}></div>
+                          <div className="skeleton-line w-100"></div>
+                          <div className="skeleton-line w-90"></div>
+                          <div className="skeleton-line w-40"></div>
+                        </div>
+                        <div className="task-actions">
+                          <div className="skeleton-line w-25" style={{ height: 28 }}></div>
+                          <div className="skeleton-line w-25" style={{ height: 28 }}></div>
+                          <div className="skeleton-line w-25" style={{ height: 28 }}></div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  ))
                 ) : filteredTasks.length === 0 ? (
                   <div className="col-12">
                     <div className="empty-state">
