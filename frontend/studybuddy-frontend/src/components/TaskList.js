@@ -289,7 +289,7 @@ const TaskList = () => {
         {/* Mode Switch Buttons */}
         <div className="text-center mb-4" style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
           <button className={`btn btn-modern ${mode === 'view' ? 'btn-primary-modern' : 'btn-info-modern'}`} onClick={() => handleSetMode('view')}>📋 View my tasks</button>
-          <button className={`btn btn-modern ${mode === 'create' ? 'btn-primary-modern' : 'btn-success-modern'}`} onClick={() => handleSetMode('create')}>✨ Create a task</button>
+          <button className={`btn btn-modern ${mode === 'create' ? 'btn-primary-modern' : 'btn-success-modern'}`} onClick={() => handleSetMode('create')}>✏️ Create a task</button>
           <button className={`btn btn-modern btn-outline-modern`} onClick={() => handleSetMode('home')}>🏠 Home</button>
         </div>
 
@@ -310,10 +310,10 @@ const TaskList = () => {
                 </div>
                 <div className="col-md-6">
                   <div className="modern-card home-choice-card soft-pulse" style={{ height: '100%' }}>
-                    <div className="card-header-modern"><h3 className="mb-0">✨ Create a task</h3></div>
+                    <div className="card-header-modern"><h3 className="mb-0">✏️ Create a task</h3></div>
                     <div className="p-4">
                       <p>Capture new work with title, description, priority, category and an optional due date.</p>
-                      <button className="btn btn-success-modern btn-modern" onClick={() => setMode('create')}>Start a new task →</button>
+                      <button className="btn btn-success-modern btn-modern" onClick={() => setMode('create')}>✏️ Start a new task →</button>
                     </div>
                   </div>
                 </div>
@@ -327,7 +327,7 @@ const TaskList = () => {
                 <div className="col-12">
                   <div className="modern-card" style={{ height: '100%' }}>
                     <div className="card-header-modern">
-                      <h3 className="mb-0">✨ Create New Task</h3>
+                      <h3 className="mb-0">✏️ Create New Task</h3>
                     </div>
                     <div className="card-body p-4">
                       <form onSubmit={createTask}>
