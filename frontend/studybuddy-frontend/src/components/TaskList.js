@@ -334,7 +334,7 @@ const TaskList = () => {
             <motion.div key="create" variants={sectionVariants} initial="initial" animate="animate" exit="exit">
               <div className="row mb-4">
                 <div className="col-12">
-                  <div className="modern-card" style={{ height: '100%' }}>
+                  <div className="modern-card create-card" style={{ height: '100%' }}>
                     <div className="card-header-modern">
                       <h3 className="mb-0">✏️ Create New Task</h3>
                     </div>
