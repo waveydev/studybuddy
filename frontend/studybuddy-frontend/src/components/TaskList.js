@@ -180,6 +180,8 @@ const TaskList = () => {
   };
 
   const getDueDateClass = (task) => {
+    // For completed tasks, don't highlight overdue/soon
+    if (task.status === 'completed') return '';
     if (task.is_overdue) return 'overdue';
     if (task.days_until_due !== null && task.days_until_due <= 3) return 'due-soon';
     return '';
@@ -187,6 +189,8 @@ const TaskList = () => {
 
   const getTaskCardClass = (task) => {
     let classes = 'task-card fade-in';
+    // For completed tasks, keep neutral styling
+    if (task.status === 'completed') return classes;
     if (task.is_overdue) classes += ' overdue';
     else if (task.days_until_due !== null && task.days_until_due <= 3) classes += ' due-soon';
     return classes;
@@ -441,7 +445,7 @@ const TaskList = () => {
                           <span>{formatDate(task.due_date)}</span>
                         </div>
                         
-                        {task.days_until_due !== null && (
+                        {task.status !== 'completed' && task.days_until_due !== null && (
                           <div className={`due-date-info ${getDueDateClass(task)}`}>
                             <span>⏰</span>
                             <span>
