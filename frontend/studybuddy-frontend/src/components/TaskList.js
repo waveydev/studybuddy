@@ -7,7 +7,16 @@ const TaskList = () => {
   const [filteredTasks, setFilteredTasks] = useState([]);
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
   const [newTask, setNewTask] = useState({
+    title: '',
+    description: '',
+    priority: 'medium',
+    category: 'other',
+    due_date: ''
+  });
+  const [editingTaskId, setEditingTaskId] = useState(null);
+  const [editForm, setEditForm] = useState({
     title: '',
     description: '',
     priority: 'medium',
@@ -35,6 +44,23 @@ const TaskList = () => {
     }
   };
 
+  // Helpers for datetime-local value formatting and ISO conversion
+  const toDatetimeLocal = (isoString) => {
+    if (!isoString) return '';
+    const d = new Date(isoString);
+    const pad = (n) => String(n).padStart(2, '0');
+    const year = d.getFullYear();
+    const month = pad(d.getMonth() + 1);
+    const day = pad(d.getDate());
+    const hours = pad(d.getHours());
+    const minutes = pad(d.getMinutes());
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
+  const toIsoOrNull = (datetimeLocal) => {
+    return datetimeLocal ? new Date(datetimeLocal).toISOString() : null;
+  };
+
   const createTask = async (e) => {
     e.preventDefault();
     if (!newTask.title.trim()) return;
@@ -52,6 +78,48 @@ const TaskList = () => {
       console.error('Error creating task:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Editing: start, cancel, change handlers, and save
+  const startEdit = (task) => {
+    setEditingTaskId(task.id);
+    setEditForm({
+      title: task.title || '',
+      description: task.description || '',
+      priority: task.priority || 'medium',
+      category: task.category || 'other',
+      due_date: toDatetimeLocal(task.due_date)
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingTaskId(null);
+    setEditForm({ title: '', description: '', priority: 'medium', category: 'other', due_date: '' });
+  };
+
+  const handleEditChange = (field, value) => {
+    setEditForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const saveEdit = async (taskId) => {
+    if (!editForm.title.trim()) return;
+    setSavingEdit(true);
+    try {
+      const payload = {
+        title: editForm.title,
+        description: editForm.description,
+        priority: editForm.priority,
+        category: editForm.category,
+        due_date: toIsoOrNull(editForm.due_date)
+      };
+      await axios.patch(`http://127.0.0.1:8000/api/tasks/${taskId}/`, payload);
+      setEditingTaskId(null);
+      await fetchTasks();
+    } catch (error) {
+      console.error('Error saving task edits:', error);
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -294,77 +362,165 @@ const TaskList = () => {
               <div key={task.id} className="col-lg-4 col-md-6 mb-4">
                 <div className={getTaskCardClass(task)}>
                   <div className="card-body p-3">
-                    <div className="d-flex justify-content-between align-items-start mb-2">
-                      <span className={`priority-badge priority-${task.priority}`}>
-                        {task.priority}
-                      </span>
-                      <span className="category-badge">
-                        {task.category}
-                      </span>
-                    </div>
-                    
-                    <h5 className="card-title mb-2">{task.title}</h5>
-                    <p className="card-text text-muted mb-3">
-                      {task.description || 'No description provided'}
-                    </p>
-                    
-                    <div className={`due-date-info ${getDueDateClass(task)}`}>
-                      <span>📅</span>
-                      <span>{formatDate(task.due_date)}</span>
-                    </div>
-                    
-                    {task.days_until_due !== null && (
-                      <div className={`due-date-info ${getDueDateClass(task)}`}>
-                        <span>⏰</span>
-                        <span>
-                          {task.days_until_due < 0 
-                            ? `${Math.abs(task.days_until_due)} days overdue!`
-                            : task.days_until_due === 0 
-                            ? 'Due today!'
-                            : `${task.days_until_due} days remaining`
-                          }
-                        </span>
+                    {editingTaskId === task.id ? (
+                      // Edit mode: show inline form
+                      <div className="edit-form">
+                        <div className="row g-2">
+                          <div className="col-12">
+                            <input
+                              type="text"
+                              className="form-control form-control-modern"
+                              placeholder="Task title *"
+                              value={editForm.title}
+                              onChange={(e) => handleEditChange('title', e.target.value)}
+                              required
+                            />
+                          </div>
+                          <div className="col-12">
+                            <input
+                              type="text"
+                              className="form-control form-control-modern"
+                              placeholder="Description"
+                              value={editForm.description}
+                              onChange={(e) => handleEditChange('description', e.target.value)}
+                            />
+                          </div>
+                          <div className="col-6">
+                            <select
+                              className="form-control form-control-modern"
+                              value={editForm.priority}
+                              onChange={(e) => handleEditChange('priority', e.target.value)}
+                            >
+                              <option value="low">🟢 Low</option>
+                              <option value="medium">🟡 Medium</option>
+                              <option value="high">🔴 High</option>
+                            </select>
+                          </div>
+                          <div className="col-6">
+                            <select
+                              className="form-control form-control-modern"
+                              value={editForm.category}
+                              onChange={(e) => handleEditChange('category', e.target.value)}
+                            >
+                              <option value="assignment">📝 Assignment</option>
+                              <option value="exam">📚 Exam</option>
+                              <option value="project">💼 Project</option>
+                              <option value="reading">📖 Reading</option>
+                              <option value="other">📌 Other</option>
+                            </select>
+                          </div>
+                          <div className="col-12">
+                            <input
+                              type="datetime-local"
+                              className="form-control form-control-modern"
+                              value={editForm.due_date}
+                              onChange={(e) => handleEditChange('due_date', e.target.value)}
+                            />
+                          </div>
+                        </div>
                       </div>
-                    )}
+                    ) : (
+                      // View mode
+                      <>
+                        <div className="d-flex justify-content-between align-items-start mb-2">
+                          <span className={`priority-badge priority-${task.priority}`}>
+                            {task.priority}
+                          </span>
+                          <span className="category-badge">
+                            {task.category}
+                          </span>
+                        </div>
+                        
+                        <h5 className="card-title mb-2">{task.title}</h5>
+                        <p className="card-text text-muted mb-3">
+                          {task.description || 'No description provided'}
+                        </p>
+                        
+                        <div className={`due-date-info ${getDueDateClass(task)}`}>
+                          <span>📅</span>
+                          <span>{formatDate(task.due_date)}</span>
+                        </div>
+                        
+                        {task.days_until_due !== null && (
+                          <div className={`due-date-info ${getDueDateClass(task)}`}>
+                            <span>⏰</span>
+                            <span>
+                              {task.days_until_due < 0 
+                                ? `${Math.abs(task.days_until_due)} days overdue!`
+                                : task.days_until_due === 0 
+                                ? 'Due today!'
+                                : `${task.days_until_due} days remaining`
+                              }
+                            </span>
+                          </div>
+                        )}
 
-                    <div className="mt-3">
-                      <span className={`status-badge status-${task.status}`}>
-                        {task.status === 'in_progress' ? 'In Progress' : task.status}
-                      </span>
-                    </div>
+                        <div className="mt-3">
+                          <span className={`status-badge status-${task.status}`}>
+                            {task.status === 'in_progress' ? 'In Progress' : task.status}
+                          </span>
+                        </div>
+                      </>
+                    )}
                   </div>
                   
                   <div className="task-actions">
-                    {task.status !== 'completed' && (
+                    {editingTaskId === task.id ? (
                       <>
                         <button
-                          className="btn btn-info-modern btn-modern"
-                          onClick={() => updateTaskStatus(task.id, 'in_progress')}
+                          className="btn btn-success-modern btn-modern"
+                          disabled={savingEdit}
+                          onClick={() => saveEdit(task.id)}
                         >
-                          ⏳ Progress
+                          {savingEdit ? 'Saving…' : '💾 Save'}
                         </button>
                         <button
-                          className="btn btn-success-modern btn-modern"
-                          onClick={() => updateTaskStatus(task.id, 'completed')}
+                          className="btn btn-warning-modern btn-modern"
+                          onClick={cancelEdit}
                         >
-                          ✅ Complete
+                          ✖️ Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          className="btn btn-secondary btn-modern"
+                          onClick={() => startEdit(task)}
+                        >
+                          ✏️ Edit
+                        </button>
+                        {task.status !== 'completed' && (
+                          <>
+                            <button
+                              className="btn btn-info-modern btn-modern"
+                              onClick={() => updateTaskStatus(task.id, 'in_progress')}
+                            >
+                              ⏳ Progress
+                            </button>
+                            <button
+                              className="btn btn-success-modern btn-modern"
+                              onClick={() => updateTaskStatus(task.id, 'completed')}
+                            >
+                              ✅ Complete
+                            </button>
+                          </>
+                        )}
+                        {task.status === 'completed' && (
+                          <button
+                            className="btn btn-warning-modern btn-modern"
+                            onClick={() => updateTaskStatus(task.id, 'pending')}
+                          >
+                            🔄 Reopen
+                          </button>
+                        )}
+                        <button
+                          className="btn btn-danger-modern btn-modern"
+                          onClick={() => deleteTask(task.id)}
+                        >
+                          🗑️ Delete
                         </button>
                       </>
                     )}
-                    {task.status === 'completed' && (
-                      <button
-                        className="btn btn-warning-modern btn-modern"
-                        onClick={() => updateTaskStatus(task.id, 'pending')}
-                      >
-                        🔄 Reopen
-                      </button>
-                    )}
-                    <button
-                      className="btn btn-danger-modern btn-modern"
-                      onClick={() => deleteTask(task.id)}
-                    >
-                      🗑️ Delete
-                    </button>
                   </div>
                 </div>
               </div>
