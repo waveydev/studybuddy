@@ -166,6 +166,23 @@ const TaskList = () => {
     return datetimeLocal ? new Date(datetimeLocal).toISOString() : null;
   };
 
+  // Quick date helpers
+  const getDatetimeLocalForOffset = (daysOffset, hour = 17, minute = 0) => {
+    const date = new Date();
+    date.setDate(date.getDate() + daysOffset);
+    date.setHours(hour, minute, 0, 0);
+    return toDatetimeLocal(date.toISOString());
+  };
+
+  const setQuickDate = (daysOffset, isEdit = false) => {
+    const value = getDatetimeLocalForOffset(daysOffset);
+    if (isEdit) {
+      setEditForm(prev => ({ ...prev, due_date: value }));
+    } else {
+      setNewTask(prev => ({ ...prev, due_date: value }));
+    }
+  };
+
   const createTask = async (e) => {
     e.preventDefault();
     if (!newTask.title.trim()) return;
@@ -466,7 +483,12 @@ const TaskList = () => {
                               <option value="other">📌 Other</option>
                             </select>
                           </div>
-                          <div className="col-md-3">
+                          <div className="col-md-6">
+                            <div className="quick-date-buttons mb-2">
+                              <button type="button" className="btn-quick-date" onClick={() => setQuickDate(1)}>Tomorrow</button>
+                              <button type="button" className="btn-quick-date" onClick={() => setQuickDate(3)}>In 3 days</button>
+                              <button type="button" className="btn-quick-date" onClick={() => setQuickDate(7)}>Next week</button>
+                            </div>
                             <input
                               type="datetime-local"
                               className="form-control form-control-modern"
@@ -474,10 +496,10 @@ const TaskList = () => {
                               onChange={(e) => setNewTask({ ...newTask, due_date: e.target.value })}
                             />
                           </div>
-                          <div className="col-md-3">
+                          <div className="col-md-12">
                             <button 
                               type="submit" 
-                              className="btn btn-primary-modern btn-modern w-100"
+                              className="btn btn-primary-modern btn-modern"
                               disabled={loading}
                             >
                               {loading ? <span className="loading-spinner"></span> : '➕'}
@@ -724,6 +746,11 @@ const TaskList = () => {
                                   </select>
                                 </div>
                                 <div className="col-12">
+                                  <div className="quick-date-buttons mb-2">
+                                    <button type="button" className="btn-quick-date" onClick={() => setQuickDate(1, true)}>Tomorrow</button>
+                                    <button type="button" className="btn-quick-date" onClick={() => setQuickDate(3, true)}>In 3 days</button>
+                                    <button type="button" className="btn-quick-date" onClick={() => setQuickDate(7, true)}>Next week</button>
+                                  </div>
                                   <input
                                     type="datetime-local"
                                     className="form-control form-control-modern"
