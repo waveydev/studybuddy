@@ -55,6 +55,15 @@ const TaskList = () => {
     category: 'other',
     due_date: ''
   });
+  // Track last completed task for a one-time celebration animation
+  const [lastCompletedId, setLastCompletedId] = useState(null);
+
+  // Clock for urgency visuals to update naturally (once per minute)
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     fetchTasks();
@@ -248,6 +257,11 @@ const TaskList = () => {
   const updateTaskStatus = async (taskId, newStatus) => {
     try {
       await axios.patch(`http://127.0.0.1:8000/api/tasks/${taskId}/`, { status: newStatus });
+      if (newStatus === 'completed') {
+        setLastCompletedId(taskId);
+        // Clear highlight after a short moment
+        setTimeout(() => setLastCompletedId(null), 1800);
+      }
       fetchTasks();
       const msg =
         newStatus === 'completed' ? 'Marked as completed' :
@@ -273,6 +287,24 @@ const TaskList = () => {
     }
   };
 
+  // Urgency helpers
+  const getUrgency = (task) => {
+    if (task.status === 'completed') return 'none';
+    if (task.is_overdue) return 'overdue';
+    if (task.days_until_due !== null && task.days_until_due <= 7) return 'due-soon';
+    return 'none';
+  };
+
+  // Compute progress from created_at -> due_date; may exceed 1 if overdue
+  const computeTimeProgress = (task) => {
+    if (!task?.due_date || task.status === 'completed' || !task?.created_at) return null;
+    const start = new Date(task.created_at).getTime();
+    const end = new Date(task.due_date).getTime();
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return null;
+    const ratio = (now - start) / (end - start);
+    return ratio;
+  };
+
   
 
   const formatDate = (dateString) => {
@@ -291,16 +323,16 @@ const TaskList = () => {
     // For completed tasks, don't highlight overdue/soon
     if (task.status === 'completed') return '';
     if (task.is_overdue) return 'overdue';
-    if (task.days_until_due !== null && task.days_until_due <= 3) return 'due-soon';
+    if (task.days_until_due !== null && task.days_until_due <= 7) return 'due-soon';
     return '';
   };
 
   const getTaskCardClass = (task) => {
     let classes = 'task-card fade-in';
-    // For completed tasks, keep neutral styling
-    if (task.status === 'completed') return classes;
+    // Completed tasks get a celebratory style
+    if (task.status === 'completed') return classes + ' completed';
     if (task.is_overdue) classes += ' overdue';
-    else if (task.days_until_due !== null && task.days_until_due <= 3) classes += ' due-soon';
+    else if (task.days_until_due !== null && task.days_until_due <= 7) classes += ' due-soon';
     return classes;
   };
 
@@ -583,7 +615,19 @@ const TaskList = () => {
                   </div>
                 ) : (
                   <AnimatePresence initial={false}>
-                    {filteredTasks.map(task => (
+                    {filteredTasks.map(task => {
+                      const urgency = getUrgency(task);
+                      const progress = computeTimeProgress(task);
+                      const widthPct = progress != null
+                        ? Math.max(0, Math.min(100, Math.round(progress * 100)))
+                        : null;
+                      const attentionLabel =
+                        urgency === 'overdue'
+                          ? `Overdue${task.days_until_due != null ? ` by ${Math.abs(task.days_until_due)} ${Math.abs(task.days_until_due) === 1 ? 'day' : 'days'}` : ''}`
+                          : urgency === 'due-soon'
+                          ? `Due in ${task.days_until_due ?? 0} ${task.days_until_due === 1 ? 'day' : 'days'}`
+                          : null;
+                      return (
                       <motion.div
                         key={task.id}
                         layout
@@ -602,8 +646,35 @@ const TaskList = () => {
                               : undefined
                           }
                           transition={task._optimistic ? { duration: 0.9 } : undefined}
-                          className={getTaskCardClass(task)}
+                          className={`${getTaskCardClass(task)} ${task.status === 'completed' && lastCompletedId === task.id ? 'celebrate' : ''}`}
                         >
+                        {/* Success bar for completed tasks */}
+                        {task.status === 'completed' && (
+                          <>
+                            <div className="success-bar" aria-hidden="true"></div>
+                            {/* Right-middle emerald check overlay */}
+                            <div
+                              className="completion-check"
+                              role="status"
+                              aria-label="Task completed"
+                              title="Task completed"
+                            >
+                              ✓
+                            </div>
+                          </>
+                        )}
+                        {/* Urgency progress bar (top) */}
+                        {progress != null && (
+                          <div className="urgency-bar" aria-hidden="true">
+                            <motion.div
+                              className={`fill ${urgency === 'overdue' ? 'danger' : urgency === 'due-soon' ? 'warning' : ''}`}
+                              initial={{ width: 0 }}
+                              animate={{ width: `${widthPct}%` }}
+                              transition={{ type: 'spring', stiffness: 200, damping: 30, mass: 0.7 }}
+                            />
+                          </div>
+                        )}
+
                         <div className="card-body p-3">
                           {editingTaskId === task.id ? (
                             // Edit mode: show inline form
@@ -666,15 +737,32 @@ const TaskList = () => {
                             // View mode
                             <>
                               <div className="d-flex justify-content-between align-items-start mb-2">
-                                <span className={`priority-badge priority-${task.priority}`}>
-                                  {task.priority}
-                                </span>
+                                <div className="d-flex align-items-center" style={{ gap: '8px' }}>
+                                  <span className={`priority-badge priority-${task.priority}`}>
+                                    {task.priority}
+                                  </span>
+                                  {task.status !== 'completed' && urgency !== 'none' ? (
+                                    <span
+                                      className={`urgency-chip ${urgency === 'overdue' ? 'danger' : 'warning'}`}
+                                      role="status"
+                                      aria-label={attentionLabel || undefined}
+                                      title={attentionLabel || undefined}
+                                    >
+                                      {urgency === 'overdue' ? 'Overdue' : 'Due soon'}
+                                    </span>
+                                  ) : null}
+                                </div>
                                 <span className="category-badge">
                                   {task.category}
                                 </span>
                               </div>
                               
-                              <h5 className="card-title mb-2">{task.title}</h5>
+                              <h5 className="card-title mb-2">
+                                {urgency !== 'none' && (
+                                  <span className={`pulse-dot ${urgency === 'overdue' ? 'danger' : 'warning'}`} aria-hidden="true" />
+                                )}
+                                {task.title}
+                              </h5>
                               <p className="card-text text-muted mb-3">
                                 {task.description || 'No description provided'}
                               </p>
@@ -767,7 +855,7 @@ const TaskList = () => {
                         </div>
                         </motion.div>
                       </motion.div>
-                    ))}
+                    );})}
                   </AnimatePresence>
                 )}
               </motion.div>

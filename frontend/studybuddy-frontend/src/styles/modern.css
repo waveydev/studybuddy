@@ -16,6 +16,11 @@ html { scroll-behavior: smooth; }
   --light-bg: #f0fdf4;      /* Minty light */
   --surface: #ffffff;
   --muted: #334155;         /* Slate-700 */
+  /* Extra tokens for urgency colors */
+  --danger-500: #ef4444;
+  --danger-600: #dc2626;
+  --warning-500: #f59e0b;
+  --warning-600: #d97706;
 
   --card-shadow: 0 8px 20px rgba(2, 6, 23, 0.06);
   --card-shadow-hover: 0 16px 30px rgba(2, 6, 23, 0.12);
@@ -224,6 +229,7 @@ body {
   height: 100%;
   overflow: hidden;
   backdrop-filter: saturate(120%) blur(4px);
+  position: relative; /* allow ribbons and bars */
 }
 
 .task-card:hover {
@@ -237,6 +243,167 @@ body {
 
 .task-card.due-soon {
   border-left: 4px solid var(--warning-color);
+}
+
+/* Urgency bar at top of card */
+.urgency-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(15, 23, 42, 0.06);
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.urgency-bar .fill {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #10b981, #34d399);
+}
+.urgency-bar .fill.warning {
+  background: linear-gradient(90deg, var(--warning-500), var(--warning-600));
+}
+.urgency-bar .fill.danger {
+  background: linear-gradient(90deg, var(--danger-500), var(--danger-600));
+}
+
+/* Success bar for completed cards */
+.success-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+/* Corner attention ribbon */
+.attention-ribbon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  font-size: 12px;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+.attention-ribbon.warning { background: var(--warning-500); }
+.attention-ribbon.danger { background: var(--danger-500); }
+
+/* Pulse dot next to title */
+.pulse-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 0 rgba(0,0,0,0);
+}
+.pulse-dot.warning {
+  background: var(--warning-500);
+  box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+  animation: pulseWarn 1.8s infinite;
+}
+.pulse-dot.danger {
+  background: var(--danger-500);
+  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  animation: pulseDanger 1.8s infinite;
+}
+
+@keyframes pulseWarn {
+  0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6); }
+  70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+}
+@keyframes pulseDanger {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+  70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+/* Inline urgency chip (used next to priority badge) */
+.urgency-chip {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.35rem 0.55rem;
+  border-radius: 999px;
+  color: #fff;
+  text-transform: capitalize;
+  letter-spacing: 0.2px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+}
+.urgency-chip.warning { background: var(--warning-500); }
+.urgency-chip.danger { background: var(--danger-500); }
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-dot.warning, .pulse-dot.danger { animation: none; }
+  .urgency-bar .fill { transition: none !important; }
+}
+
+/* Completed card styling */
+.task-card.completed {
+  border-left: 4px solid var(--success-color);
+  box-shadow: 0 8px 22px rgba(16,185,129,0.12);
+}
+
+/* One-time celebration glow when a task is marked completed */
+.celebrate {
+  animation: celebrateGlow 1.6s cubic-bezier(0.22, 1, 0.36, 1) 1;
+}
+@keyframes celebrateGlow {
+  0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.0); transform: scale(1); }
+  25% { box-shadow: 0 0 0 10px rgba(16,185,129,0.20); transform: scale(1.01); }
+  55% { box-shadow: 0 0 0 16px rgba(16,185,129,0.14); transform: scale(1.005); }
+  100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.0); transform: scale(1); }
+}
+
+/* Completion chip next to priority */
+.completion-chip {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.35rem 0.55rem;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--success-color);
+  text-transform: capitalize;
+  letter-spacing: 0.2px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+}
+
+/* Check overlay for completed tasks */
+.completion-check {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 64px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--secondary-color);
+  color: #fff;
+  font-weight: 800;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 22px rgba(52,211,153,0.30);
+  pointer-events: none;
+  animation: checkPop 320ms ease-out both;
+}
+@keyframes checkPop {
+  0% { transform: translateY(-50%) scale(0.6); opacity: 0; }
+  60% { transform: translateY(-50%) scale(1.08); opacity: 1; }
+  100% { transform: translateY(-50%) scale(1); opacity: 1; }
 }
 
 .priority-badge {
