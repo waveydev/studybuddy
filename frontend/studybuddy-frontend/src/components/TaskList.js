@@ -672,18 +672,18 @@ const TaskList = () => {
                         >
                         {/* Success bar for completed tasks */}
                         {task.status === 'completed' && (
-                          <>
-                            <div className="success-bar" aria-hidden="true"></div>
-                            {/* Right-middle emerald check overlay */}
-                            <div
-                              className="completion-check"
-                              role="status"
-                              aria-label="Task completed"
-                              title="Task completed"
-                            >
-                              ✓
-                            </div>
-                          </>
+                          <div className="success-bar" aria-hidden="true"></div>
+                        )}
+                        {/* Completion check overlay for all completed tasks */}
+                        {task.status === 'completed' && (
+                          <div
+                            className="completion-check"
+                            role="status"
+                            aria-label="Task completed"
+                            title="Task completed"
+                          >
+                            ✓
+                          </div>
                         )}
                         {/* Urgency progress bar (top) */}
                         {progress != null && (

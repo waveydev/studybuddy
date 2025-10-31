@@ -352,6 +352,9 @@ body {
 .task-card.completed {
   border-left: 4px solid var(--success-color);
   box-shadow: 0 8px 22px rgba(16,185,129,0.12);
+  /* In mixed lists (All Tasks), completed cards shouldn't stretch to match tallest;
+     make them collapse to content height so no empty space appears below actions */
+  height: auto;
 }
 
 /* One-time celebration glow when a task is marked completed */
@@ -404,6 +407,15 @@ body {
   0% { transform: translateY(-50%) scale(0.6); opacity: 0; }
   60% { transform: translateY(-50%) scale(1.08); opacity: 1; }
   100% { transform: translateY(-50%) scale(1); opacity: 1; }
+}
+
+@media (max-width: 768px) {
+  .completion-check {
+    width: 56px;
+    height: 36px;
+    font-size: 20px;
+    right: 10px;
+  }
 }
 
 .priority-badge {
