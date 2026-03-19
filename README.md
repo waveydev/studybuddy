@@ -1,5 +1,9 @@
 # StudyBuddy
 
+
+https://github.com/user-attachments/assets/73d96176-47a1-4a92-a37e-5ad16ae01acc
+
+
 An approachable, animated study task manager built with a Django REST API backend and a React (Create React App) frontend. Track assignments, projects, and exams; filter by status and priority; and enjoy a clean, modern UI with subtle Framer Motion transitions.
 
 ## Features
