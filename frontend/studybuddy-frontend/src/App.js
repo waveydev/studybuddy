@@ -7,6 +7,7 @@ import StudyContext from './StudyContext';
 import useStudyData from './hooks/useStudyData';
 import useFocusTimer, { formatClock } from './hooks/useFocusTimer';
 import Icon from './components/Icon';
+import Logo from './components/Logo';
 import TaskModal from './components/TaskModal';
 import Dashboard from './views/Dashboard';
 import TasksView from './views/TasksView';
@@ -115,8 +116,7 @@ function App() {
 
         <aside className="sidebar">
           <div className="brand">
-            <span className="brand-mark" aria-hidden="true"><Icon name="book" size={18} /></span>
-            StudyBuddy
+            <Logo />
           </div>
 
           <button type="button" className="btn btn-primary btn-block new-task" onClick={() => ui.openCreate()}>

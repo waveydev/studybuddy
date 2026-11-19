@@ -4,7 +4,42 @@ import { useStudy } from '../StudyContext';
 import { COURSE_COLORS } from '../utils/constants';
 import { dueInfo, formatMinutes } from '../utils/dates';
 
-const CourseForm = ({ initial, submitLabel, onSubmit, onCancel }) => {
+// Short label for the course badge: first token of the code ("CS 101" -> "CS"),
+// otherwise initials of the first two words of the name.
+const monogram = (course) => {
+  const code = (course.code || '').trim();
+  if (code) return code.split(/[\s\-_]+/)[0].slice(0, 4).toUpperCase();
+  return course.name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase();
+};
+
+const ProgressRing = ({ pct, label }) => {
+  const r = 17;
+  const c = 2 * Math.PI * r;
+  return (
+    <div className="ring" role="img" aria-label={label}>
+      <svg viewBox="0 0 40 40" width="48" height="48">
+        <circle className="ring-track" cx="20" cy="20" r={r} />
+        <circle
+          className="ring-fill"
+          cx="20"
+          cy="20"
+          r={r}
+          strokeDasharray={c}
+          strokeDashoffset={c * (1 - pct / 100)}
+        />
+      </svg>
+      <span className="ring-value">{pct}<small>%</small></span>
+    </div>
+  );
+};
+
+const CourseForm =({ initial, submitLabel, onSubmit, onCancel }) => {
   const [name, setName] = useState(initial?.name || '');
   const [code, setCode] = useState(initial?.code || '');
   const [color, setColor] = useState(initial?.color || COURSE_COLORS[3]);
@@ -121,12 +156,16 @@ const CoursesView = () => {
               );
             }
 
+            const pct = mine.length ? Math.round((done / mine.length) * 100) : 0;
+            const badge = monogram(course);
+
             return (
-              <div key={course.id} className="card course-card" style={{ '--course': course.color }}>
+              <article key={course.id} className="card course-card" style={{ '--course': course.color }}>
                 <div className="course-top">
-                  <div>
+                  <span className="course-badge" data-len={badge.length} aria-hidden="true">{badge}</span>
+                  <div className="course-title">
                     <h2>{course.name}</h2>
-                    {course.code && <span className="card-note">{course.code}</span>}
+                    {course.code && <span className="course-code">{course.code}</span>}
                   </div>
                   <div className="course-actions">
                     <button type="button" className="icon-btn" aria-label={`Edit ${course.name}`} title="Edit" onClick={() => setEditingId(course.id)}>
@@ -149,32 +188,45 @@ const CoursesView = () => {
                   </div>
                 </div>
 
-                <div className="meter" role="img" aria-label={`${done} of ${mine.length} tasks done`}>
-                  <div className="meter-fill" style={{ width: mine.length ? `${(done / mine.length) * 100}%` : 0 }} />
-                </div>
                 <div className="course-stats">
-                  <span><strong>{open}</strong> open</span>
-                  <span><strong>{done}</strong> done</span>
-                  <span><strong>{formatMinutes(minutes)}</strong> focused</span>
+                  <ProgressRing pct={pct} label={`${done} of ${mine.length} tasks done`} />
+                  <div className="course-stat">
+                    <strong>{open}</strong>
+                    <span>Open</span>
+                  </div>
+                  <div className="course-stat">
+                    <strong>{done}</strong>
+                    <span>Done</span>
+                  </div>
+                  <div className="course-stat">
+                    <strong>{formatMinutes(minutes)}</strong>
+                    <span>Focused</span>
+                  </div>
                 </div>
 
-                {next ? (
-                  <button type="button" className="course-next" onClick={() => ui.openTask(next.id)}>
-                    <span className="field-label">Next up</span>
-                    <span className="task-title">{next.title}</span>
-                    <span className={`due tone-${nextDue.tone}`}>{nextDue.label}</span>
+                <div className="course-foot">
+                  {next ? (
+                    <button type="button" className="course-next" onClick={() => ui.openTask(next.id)}>
+                      <span className="course-next-label">Next up</span>
+                      <span className="course-next-title">{next.title}</span>
+                      <span className={`due-pill tone-${nextDue.tone}`}>{nextDue.label}</span>
+                    </button>
+                  ) : (
+                    <p className="course-next course-next-empty">
+                      <Icon name="check" size={15} /> All caught up
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    className="course-add"
+                    aria-label={`Add task to ${course.name}`}
+                    title="Add task"
+                    onClick={() => ui.openCreate({ course: course.id })}
+                  >
+                    <Icon name="plus" size={18} />
                   </button>
-                ) : (
-                  <p className="muted course-next-empty">Nothing due.</p>
-                )}
-                <button
-                  type="button"
-                  className="btn btn-quiet btn-sm btn-block"
-                  onClick={() => ui.openCreate({ course: course.id })}
-                >
-                  <Icon name="plus" size={14} /> Add task
-                </button>
-              </div>
+                </div>
+              </article>
             );
           })}
         </div>
